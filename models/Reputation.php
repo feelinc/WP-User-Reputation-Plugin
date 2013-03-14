@@ -188,15 +188,7 @@ class Reputation
 
 		$reputation_history_id = $wpdb->insert_id;
 
-		switch($data['action_type'])
-		{
-			case 'post':
-				$user_id = $wpdb->get_var('SELECT `post_author` FROM `'.$wpdb->posts.'` WHERE `ID` = '.$data['action_id']);
-			break;
-			case 'comment':
-				$user_id = $wpdb->get_var('SELECT `user_id` FROM `'.$wpdb->comments.'` WHERE `comment_ID` = '.$data['action_id']);
-			break;
-		}
+		$user_id = self::getActionCreator($data['action_type'], $data['action_id']);
 
 		if (empty($user_id))
 		{
@@ -247,5 +239,212 @@ class Reputation
 		unset($sql);
 
 		return $reputation_id;
+	}
+
+	public static function getActionCreator($type, $action_id)
+	{
+		$user_id = 0;
+
+		if (empty($type) || empty($action_id))
+			return $user_id;
+
+		global $wpdb;
+
+		switch(strtolower($type))
+		{
+			case 'post':
+				$user_id = $wpdb->get_var('SELECT `post_author` FROM `'.$wpdb->posts.'` WHERE `ID` = '.$action_id);
+			break;
+			case 'comment':
+				$user_id = $wpdb->get_var('SELECT `user_id` FROM `'.$wpdb->comments.'` WHERE `comment_ID` = '.$action_id);
+			break;
+		}
+
+		return $user_id;
+	}
+
+	public static function getBadge($param = array(), &$total_rows = 0, &$number_rows = 0)
+	{
+		global $wpdb;
+
+		// Check if param is a numeric, treat as the ID
+		if (is_numeric($param))
+		{
+			$options['id'] = $param;
+		}
+		else
+		{
+			$options = $param;
+		}
+		unset($param);
+
+		$options = array_merge(array(
+			'id'       => 0,
+			'type'     => '',
+			'page'     => 0,
+			'limit'    => 0,
+			'order_by' => 'id',
+			'order'    => 'ASC'
+		), $options);
+
+		$need_a_row = FALSE;
+	    $use_where = FALSE;
+	    $has_where = FALSE;
+
+	    if (!empty($options['id'])  
+	      || $options['limit'] == 1)
+	    {
+	    	$need_a_row = TRUE;
+	    	$use_where = TRUE;
+	    }
+
+	    if (!empty($options['type']))
+	    {
+	    	$use_where = TRUE;
+	    }
+
+	    $sql = 'SELECT ';
+
+		if (!$need_a_row)
+		{
+			$sql .= 'SQL_CALC_FOUND_ROWS ';
+		}
+
+		$sql .= '`'.$wpdb->prefix.'reputation_badges`.* FROM `'.$wpdb->prefix.'reputation_badges` ';
+
+		if ($use_where)
+		{
+			$sql .= 'WHERE ';
+		}
+
+		if (!empty($options['id']))
+		{
+			if ($has_where)
+			{
+				$sql .= 'AND ';
+			}
+
+			$sql .= '`'.$wpdb->prefix.'reputation_badges`.`id` = '.$options['id'].' ';
+
+			$has_where = TRUE;
+		}
+
+		if (!empty($options['type']))
+		{
+			if ($has_where)
+			{
+				$sql .= 'AND ';
+			}
+
+			$sql .= '`'.$wpdb->prefix.'reputation_badges`.`type` = "'.$options['action_type'].'" ';
+
+			$has_where = TRUE;
+		}
+
+		if (!empty($options['order_by']) && !empty($options['order']))
+	    {
+	    	$sql .= 'ORDER BY `'.$wpdb->prefix.'reputation_badges`.'.$options['order_by'].' '.$options['order'].' ';
+	    }
+
+	    if (!empty($options['page']) && !empty($options['limit']))
+	    {
+	    	$sql .= 'LIMIT '.($options['limit'] * ($options['page'] - 1)).', '.$options['limit'].' ';
+	    }
+	    elseif (!empty($options['limit']))
+	    {
+	    	$sql .= 'LIMIT '.$options['limit'].' ';
+	    }
+
+	    if (!$need_a_row)
+      	{
+	    	$results = $wpdb->get_results($sql);
+
+	    	if ($results)
+	    		$number_rows = count($results);
+
+	    	// Get total rows found in previous query
+	        $total_rows = $wpdb->get_var('SELECT FOUND_ROWS() as rows');
+	    }
+	    else
+	    {
+	    	$results = $wpdb->get_row($sql);
+
+	    	if ($results)
+	    		$number_rows = 1;
+	    }
+
+	    return $results;
+	}
+
+	public function addBadge($data)
+	{
+		global $wpdb;
+
+		$data = array_merge(array(
+			'title' => '',
+			'type'  => '',
+			'icon'  => ''
+		), $data);
+
+		if (empty($data['title'])
+		 || empty($data['type']))
+		{
+			throw new DBException('Invalid data', DBException::EC_INVALID_DATA);
+		}
+
+		if (!$wpdb->insert($wpdb->prefix.'reputation_badges', $data))
+		{
+			throw new DBException(sprintf('Query error: %s', $wpdb->last_error), DBException::EC_QUERY);
+		}
+
+		return $wpdb->insert_id;
+	}
+
+	public function updateBadge($id, $data)
+	{
+		global $wpdb;
+
+		if (empty($id))
+			throw new DBException('Invalid data', DBException::EC_INVALID_DATA);
+
+		$data = array_merge(array(
+			'title' => '',
+			'type'  => '',
+			'icon'  => ''
+		), $data);
+
+		if (empty($data['title'])
+		 || empty($data['type']))
+		{
+			throw new DBException('Invalid data', DBException::EC_INVALID_DATA);
+		}
+
+		if (!$wpdb->update($wpdb->prefix.'reputation_badges', $data, array(
+			'id' => $id
+		)))
+		{
+			throw new DBException(sprintf('Query error: %s', $wpdb->last_error), DBException::EC_QUERY);
+		}
+
+		return $id;
+	}
+
+	public function deleteBadge($id)
+	{
+		global $wpdb;
+
+		if (empty($id))
+			throw new DBException('Invalid data', DBException::EC_INVALID_DATA);
+
+		if (!$wpdb->delete($wpdb->prefix.'reputation_badges', array(
+			'id' => $id
+		)))
+		{
+			throw new DBException(sprintf('Query error: %s', $wpdb->last_error), DBException::EC_QUERY);
+		}
+
+		// TO DO: remove user badges also
+
+		return true;
 	}
 }

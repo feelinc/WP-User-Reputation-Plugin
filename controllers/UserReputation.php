@@ -29,7 +29,6 @@ class UserReputation extends \UserReputation\Lib\Base
 		{
 			echo 'Allowed action types are: '.implode(',', self::$_allowed_action_types);
 			exit();
-			
 		}
 
 		if (!is_user_logged_in())
@@ -43,10 +42,8 @@ class UserReputation extends \UserReputation\Lib\Base
 			}
 		}
 
-		if (self::isAlreadyAdding($user_id, $action_id, $action_type))
-		{
+		if (self::isAlreadyAdding($user_id, $action_id, $action_type, $event_name))
 			return false;
-		}
 		
 		try {
 			ReputationModel::add(array(
@@ -64,13 +61,25 @@ class UserReputation extends \UserReputation\Lib\Base
 		return true;
 	}
 
-	public static function isAlreadyAdding($user_id, $action_id, $action_type)
+	public static function isAlreadyAdding($action_id, $action_type, $event_name, $user_id = 0)
 	{
+		if (!is_user_logged_in())
+			return true;
+
+		if (empty($user_id))
+		{
+			if (false === ($user_id = self::getCurrentUserId()))
+			{
+				return true;
+			}
+		}
+		
 		try {
 			$history = ReputationModel::getHistory(array(
 				'user_id'     => (int) $user_id,
 				'action_id'   => (int) $action_id,
 				'action_type' => $action_type,
+				'event_name'  => $event_name,
 				'limit'       => 1
 			));
 
@@ -82,6 +91,27 @@ class UserReputation extends \UserReputation\Lib\Base
 		}
 
 		return false;
+	}
+
+	public static function isUserAction($action_id, $action_type, $user_id = 0)
+	{
+		if (!is_user_logged_in())
+			return true;
+
+		if (empty($user_id))
+		{
+			if (false === ($user_id = self::getCurrentUserId()))
+			{
+				return true;
+			}
+		}
+
+		$creator_id = ReputationModel::getActionCreator($action_type, $action_id);
+
+		if (empty($creator_id))
+			return true;
+
+		return ($user_id == $creator_id) ? true : false;
 	}
 
 	public static function getUserUrl($user_id = 0)

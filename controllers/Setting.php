@@ -1,5 +1,11 @@
 <?php namespace UserReputation\Ctrl;
 
+include_once( dirname(__DIR__) . '/models/Reputation.php' );
+
+use \UserReputation\Exception\SysException;
+use \UserReputation\Exception\DBException;
+use \UserReputation\Model\Reputation as ReputationModel;
+
 class Setting extends \UserReputation\Lib\Base
 {
 	private $_form = null;
@@ -15,40 +21,40 @@ class Setting extends \UserReputation\Lib\Base
 		// Add the section to general settings so we can add our
 	 	// fields to it
 	 	add_settings_section($this->getConfig('prefix').'general',
-			__('User Reputation', $this->getConfig('txt_domain')),
+			'',
 			array($this, 'generalSection'),
-			'general');
+			'user-reputation');
 	 	
 	 	// Number items per page field
 	 	add_settings_field($this->getConfig('prefix').'num_items_per_page',
 			__('Number items per page', $this->getConfig('txt_domain')),
 			array($this, 'generalNumItemsPerPageField'),
-			'general',
+			'user-reputation',
 			$this->getConfig('prefix').'general');
 
 	 	// Users reputation page slug
 	 	add_settings_field($this->getConfig('prefix').'page_slug',
 			__('User reputation page slug', $this->getConfig('txt_domain')),
 			array($this, 'generalPageSlugField'),
-			'general',
+			'user-reputation',
 			$this->getConfig('prefix').'general');
 
 	 	// User own reputation page slug
 	 	add_settings_field($this->getConfig('prefix').'own_page_slug',
 			__('"my reputation" page slug', $this->getConfig('txt_domain')),
 			array($this, 'generalOwnPageSlugField'),
-			'general',
+			'user-reputation',
 			$this->getConfig('prefix').'general');
 	 	
 	 	// Register our setting so that $_POST handling is done for us
-	 	register_setting('general', $this->getConfig('prefix').'num_items_per_page');
-	 	register_setting('general', $this->getConfig('prefix').'page_slug');
-	 	register_setting('general', $this->getConfig('prefix').'own_page_slug');
+	 	register_setting($this->getConfig('prefix').'general', $this->getConfig('prefix').'num_items_per_page');
+	 	register_setting($this->getConfig('prefix').'general', $this->getConfig('prefix').'page_slug');
+	 	register_setting($this->getConfig('prefix').'general', $this->getConfig('prefix').'own_page_slug');
 	}
 
 	public function generalSection()
 	{
-		echo '<em>'.__('User Reputation General Preferences', $this->getConfig('txt_domain')).'</em>';
+		echo '';
 	}
 
 	public function generalNumItemsPerPageField()
@@ -86,5 +92,115 @@ class Setting extends \UserReputation\Lib\Base
 	   	unset($rules);
 
 		echo '<strong>'.rtrim(get_bloginfo('siteurl'), '/').'/</strong>'.$this->_form->text($this->getConfig('prefix').'own_page_slug', $value);
+	}
+
+	public function general()
+	{
+		$updated = (isset($_GET['settings-updated'])) ? (bool) $_GET['settings-updated'] : false;
+
+		$this->loadView('admin/general.php', array(
+			'updated' => $updated
+		));
+	}
+
+	public function badge()
+	{
+		$edit = (isset($_GET['edit'])) ? (int) $_GET['edit'] : 0;
+		$delete = (isset($_GET['delete'])) ? (int) $_GET['delete'] : 0;
+
+		if ($_POST)
+		{
+			$nonce = (isset($_POST['_wpnonce'])) ? $_POST['_wpnonce'] : '';
+			if (wp_verify_nonce( $nonce, $this->getConfig('prefix').'edit-badge' ))
+			{
+				$title = (isset($_POST['title'])) ? $_POST['title'] : '';
+				$type  = (isset($_POST['type'])) ? $_POST['type'] : '';
+				$icon  = (isset($_POST['icon'])) ? $_POST['icon'] : '';
+
+				$data = array(
+					'title' => $title,
+					'type'  => $type,
+					'icon'  => $icon
+				);
+
+				$badge_id = $edit;
+
+				if (empty($badge_id))
+				{
+					try {
+						$badge_id = ReputationModel::addBadge($data);
+					} catch (DBException $e) {
+						error_log($e->getMessage());
+					}
+				}
+				else
+				{
+					try {
+						$badge_id = ReputationModel::updateBadge($badge_id, $data);
+					} catch (DBException $e) {
+						error_log($e->getMessage());
+					}
+				}
+
+				if (!empty($badge_id))
+				{
+					?>
+					<script type="text/javascript">
+						location.href = "<?php echo add_query_arg('edit', $badge_id, \UserReputation\Lib\Utility::currentUrl()); ?>";
+					</script>
+					<?php
+				}
+			}
+		}
+
+		if (!empty($delete))
+		{
+			$nonce = (isset($_GET['nonce'])) ? $_GET['nonce'] : '';
+			if (wp_verify_nonce( $nonce, $this->getConfig('prefix').'delete-badge' ))
+			{
+				try {
+					ReputationModel::deleteBadge($delete);
+				} catch (DBException $e) {
+					error_log($e->getMessage());
+				}
+
+				?>
+				<script type="text/javascript">
+					location.href = "<?php echo remove_query_arg(array('delete', 'nonce'), \UserReputation\Lib\Utility::currentUrl()); ?>";
+				</script>
+				<?php
+			}
+		}
+
+		wp_enqueue_media();
+
+		$badge = $this->defBadge();
+
+		if (!empty($edit))
+		{
+			$badge = ReputationModel::getBadge($edit);
+		}
+
+		if (empty($badge))
+			$badge = $this->defBadge();
+
+		$badges = ReputationModel::getBadge();
+
+		$this->loadView('admin/badge.php', array(
+			'badges'        => $badges,
+			'current_badge' => $badge
+		));
+	}
+
+	private function defBadge()
+	{
+		$badge = new \stdClass;
+
+		$badge->id = 0;
+		$badge->title = '';
+		$badge->type = 'bronze';
+		$badge->icon = '';
+
+		return $badge;
 	}
 }

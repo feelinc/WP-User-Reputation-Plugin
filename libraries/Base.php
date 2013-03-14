@@ -1,6 +1,7 @@
 <?php namespace UserReputation\Lib;
 
-include_once( dirname(__DIR__) . '/libraries/Exceptions.php' );
+include_once( __DIR__ . '/Exceptions.php' );
+include_once( __DIR__ . '/Utility.php' );
 
 class Base
 {
@@ -96,5 +97,12 @@ class Base
 			return $this->_paths['asset']['path'].$file;
 
 		return $this->_paths['asset']['url'].$file;
+	}
+
+	public function loadView($file, $data = array())
+	{
+		extract($data);
+
+		include($this->getPath('view').$file);
 	}
 }

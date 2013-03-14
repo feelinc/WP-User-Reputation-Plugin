@@ -63,6 +63,34 @@ class Hook extends \UserReputation\Lib\Base
 		new Setting();
 	}
 
+	public function adminMenu()
+	{
+		include_once( $this->getPath('controller') . 'Setting.php' );
+
+		$setting = new Setting();
+
+		$page = add_menu_page(__('User Reputation', $this->getConfig('txt_domain')),
+			__('Reputation', $this->getConfig('txt_domain')),
+			'manage_options',
+			'user-reputation',
+			array(&$setting, 'general'), 
+			$this->getUrl('asset').'img/user_card_basic_blue.png', 79);
+
+		add_submenu_page('user-reputation', 
+			__('General Preferences', $this->getConfig('txt_domain')), 
+			__('General', $this->getConfig('txt_domain')),
+			'manage_options',
+			'user-reputation',
+			array(&$setting, 'general'));
+
+		add_submenu_page('user-reputation', 
+			__('Reputation Badges', $this->getConfig('txt_domain')), 
+			__('Badges', $this->getConfig('txt_domain')),
+			'manage_options',
+			'user-reputation-badges',
+			array(&$setting, 'badge'));
+	}
+
 	public function templateRedirect()
 	{
 		$user_reputation = get_query_var($this->getConfig('prefix').'page');
