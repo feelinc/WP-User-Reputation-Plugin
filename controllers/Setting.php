@@ -185,8 +185,10 @@ class Setting extends \UserReputation\Lib\Base
 			$badge = $this->defBadge();
 
 		$badges = ReputationModel::getBadge();
-
+		$badge_types = $this->getConfig('badge_types');
+		
 		$this->loadView('admin/badge.php', array(
+			'badge_types'   => $badge_types,
 			'badges'        => $badges,
 			'current_badge' => $badge
 		));

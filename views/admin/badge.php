@@ -34,7 +34,7 @@
 									<span class="delete"><a href="<?php echo add_query_arg(array('delete' => $badge->id, 'nonce' => wp_create_nonce($this->getConfig('prefix').'delete-badge')), \UserReputation\Lib\Utility::currentUrl()); ?>"><?php _e('Delete', $this->getConfig('txt_domain')); ?></a></span>
 								</div>
 							</td>
-							<td class="type column-type"><?php echo $badge->type; ?></td>
+							<td class="type column-type"><?php echo $badge_types[$badge->type]; ?></td>
 						</tr>
 						<?php endforeach; ?>
 						<?php else: ?>
@@ -63,11 +63,13 @@
 						</div>
 						<div class="form-field form-required">
 							<label for="type"><?php _e('Type', $this->getConfig('txt_domain')); ?></label>
+							<?php if (!empty($badge_types)) : ?>
 							<select id="type" name="type" style="width: 95%;">
-								<option value="bronze"<?php echo ($current_badge->type == 'bronze') ? ' selected="selected"' : ''; ?>><?php _e('Bronze', $this->getConfig('txt_domain')); ?></option>
-								<option value="silver"<?php echo ($current_badge->type == 'silver') ? ' selected="selected"' : ''; ?>><?php _e('Silver', $this->getConfig('txt_domain')); ?></option>
-								<option value="gold"<?php echo ($current_badge->type == 'golden') ? ' selected="selected"' : ''; ?>><?php _e('Gold', $this->getConfig('txt_domain')); ?></option>
+								<?php foreach($badge_types as $type_key => $type) : ?>
+								<option value="<?php echo $type_key; ?>"<?php echo ($current_badge->type == $type_key) ? ' selected="selected"' : ''; ?>><?php _e($type, $this->getConfig('txt_domain')); ?></option>
+								<?php endforeach; ?>
 							</select>
+							<?php endif; ?>
 						</div>
 						<div class="form-field form-required uploader">
 							<label for="icon"><?php _e('Icon', $this->getConfig('txt_domain')); ?></label>

@@ -5,6 +5,8 @@ include_once( __DIR__ . '/Utility.php' );
 
 class Base
 {
+	private static $_instance;
+
 	private static $_folders = array(
 		'config'     => 'configs',
 		'controller' => 'controllers',
@@ -19,6 +21,11 @@ class Base
 
 	public function __construct()
 	{
+		if (!(self::$_instance instanceof self))
+        {
+            self::$_instance =& $this;
+        }
+
 		foreach(self::$_folders as $key => $folder)
 		{
 			$this->_paths[$key] = array(
@@ -28,6 +35,11 @@ class Base
 			);
 		}
 	}
+
+	public static function &app()
+    {
+        return self::$_instance;
+    }
 
 	public function getOption($name)
 	{
