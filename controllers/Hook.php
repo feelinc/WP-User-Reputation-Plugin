@@ -1,5 +1,7 @@
 <?php namespace UserReputation\Ctrl;
 
+include_once( __DIR__ . '/UserReputation.php' );
+
 class Hook extends \UserReputation\Lib\Base
 {
 	public function __construct()
@@ -48,12 +50,28 @@ class Hook extends \UserReputation\Lib\Base
 		return $vars;
 	}
 
+	public function paginationHistory()
+	{
+		$user_id = (isset($_POST['user'])) ? (int) $_POST['user'] : 0;
+		$page = (isset($_POST['page'])) ? (int) $_POST['page'] : 1;
+		$limit = (isset($_POST['limit'])) ? (int) $_POST['limit'] : $this->getOption('num_items_per_page');
+		
+		\UserReputation::getHistoryView($user_id, $limit, $page);
+		die();
+	}
+
 	public function init()
 	{
 		if ( !session_id() )
 		{
 			session_start();
 		}
+
+		wp_register_style( 'user-reputation-style', $this->getUrl('asset').'css/user.reputation.css' );
+
+		wp_register_script( 'purl-script', $this->getUrl('asset').'js/purl.js', array('jquery'), '2.2.1', true );
+		wp_register_script( 'jquery-history-script', $this->getUrl('asset').'js/jquery.history.js', array('jquery'), '1.7.1', true );
+		wp_register_script( 'user-reputation-script', $this->getUrl('asset').'js/user.reputation.js', array('jquery', 'jquery-history-script', 'purl-script'), '1.0.0', true );
 	}
 
 	public function adminInit()
@@ -89,6 +107,23 @@ class Hook extends \UserReputation\Lib\Base
 			'manage_options',
 			'user-reputation-badges',
 			array(&$setting, 'badge'));
+	}
+
+	public function wpFooter()
+	{
+		?>
+		<script type="text/javascript">
+			var urAjaxEndpoint = "<?php echo admin_url('admin-ajax.php'); ?>";
+			var urPrefix = "<?php echo $this->getConfig('prefix'); ?>";
+			var urNumItemPerPage = "<?php echo $this->getOption('num_items_per_page'); ?>";
+		</script>
+		<?php
+	}
+
+	public function wpEnqueueScripts()
+	{
+		wp_enqueue_style( 'user-reputation-style' );
+		wp_enqueue_script( 'user-reputation-script' );
 	}
 
 	public function templateRedirect()

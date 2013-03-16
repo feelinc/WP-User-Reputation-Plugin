@@ -3,7 +3,7 @@
  * The template for displaying user reputation
  */
 
-/* START: FOR SIMULATING USER REPUTATION DATA */
+/* START: EXAMPLE FOR SIMULATING USER REPUTATION DATA */
 /* YOU CAN REMOVE IT IF WANT TO */
 $reputation_nonce_key = 'add-a-reputation';
 $badge_nonce_key = 'set-badge';
@@ -107,9 +107,7 @@ $badges = UserReputation::getBadges();
 $user_badges = array();
 if ($user_data)
 {
-	$user_badges = UserReputation::getBadges(array(
-		'user_id' => $user_data->ID
-	));
+	$user_badges = UserReputation::getBadges($user_data->ID);
 }
 
 get_header(); ?>
@@ -135,7 +133,6 @@ get_header(); ?>
 		<?php endforeach; ?>
 		</ul>
 	<?php endif; ?>
-	<br/><br/><br/>
 
 	<?php else: ?>
 	<h1>NO USER FOUND FOR THIS PAGE</h1>
@@ -147,10 +144,28 @@ get_header(); ?>
 	<br/>
 	<br/>
 	<?php if ($user_data) : ?>
-	<?php UserReputation::getHistoryView($user_data->ID); ?>
+	<div id="reputation-history-wrapper">
+		<?php UserReputation::getHistoryView($user_data->ID); ?>
+	</div>
 	<?php endif; ?>
 
 	<hr/>
+
+	<h2>BADGE HISTORY</h2>
+	<br/>
+	<br/>
+	<?php if ($user_data) : ?>
+	<strong><?php echo $reputation->badge_number; ?> Badges</strong><br/><br/>
+	<div id="badge-history-wrapper">
+		<?php UserReputation::getBadgesView($user_data->ID); ?>
+	</div>
+	<?php endif; ?>
+
+	<hr/>
+
+	<h2>EXAMPLE OF POINT & BADGE ASSIGNING</h2>
+	<br/>
+	<br/>
 
 	<div class="clear">
 		<div style="width:49%; margin-righ:10px; float:left;">

@@ -780,6 +780,7 @@ class Reputation
 		if (!empty($options['user_id']))
 		{
 			$sql .= ', `'.$wpdb->prefix.'reputation_user_badges`.id as user_badge_id ';
+			$sql .= ', `'.$wpdb->prefix.'reputation_user_badges`.created_at ';
 		}
 
 		$sql .= 'FROM `'.$wpdb->prefix.'reputation_badges` ';

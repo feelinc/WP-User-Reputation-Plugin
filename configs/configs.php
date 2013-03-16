@@ -11,6 +11,7 @@ $config['own_page_slug'] = 'my-reputation';
 $config['own_page_template'] = 'my-reputation-page';
 
 $config['reputation_history_template'] = 'reputation-history-template';
+$config['badge_history_template'] = 'badge-history-template';
 
 $config['badge_types'] = array(
 	'bronze' => 'Bronze',
