@@ -22,33 +22,36 @@
             History.Adapter.bind(window, 'statechange', function(){
                 var State = History.getState();
 
-                var page = 1;
-                if (typeof State.data.page != 'undefined')
-                {
-                    page = State.data.page;
+                if (typeof State.data.af != 'undefined') {
+                    if (State.data.af == 'user-reputation') {
+                        var page = 1;
+                        if (typeof State.data.page != 'undefined') {
+                            page = State.data.page;
+                        }
+                        
+                        jQuery.ajax({
+                            type: 'POST',
+                            url: urAjaxEndpoint,
+                            dataType: 'html',
+                            data: {
+                                action: urPrefix + 'pagination_history',
+                                user: urCurrentPageUserID,
+                                page: page,
+                                limit: urNumItemPerPage
+                            },
+                            success: function(html) {
+                                jQuery('#user-reputation-history').parent().html(html);
+
+                                jQuery(document.body).animate({
+                                    'scrollTop': jQuery('#user-reputation-history').offset().top - 50
+                                }, 500, 'swing');
+
+                                userReputation.setHistoryPaginationEvent();
+                            },
+                            error: function(){}
+                        });
+                    }
                 }
-                
-                jQuery.ajax({
-                    type: 'POST',
-                    url: urAjaxEndpoint,
-                    dataType: 'html',
-                    data: {
-                        action: urPrefix + 'pagination_history',
-                        user: urCurrentPageUserID,
-                        page: page,
-                        limit: urNumItemPerPage
-                    },
-                    success: function(html) {
-                        jQuery('#user-reputation-history').parent().html(html);
-
-                        jQuery(document.body).animate({
-                            'scrollTop': jQuery('#user-reputation-history').offset().top - 50
-                        }, 500, 'swing');
-
-                        userReputation.setHistoryPaginationEvent();
-                    },
-                    error: function(){}
-                });
             });
 
             userReputation.setHistoryPaginationEvent();
@@ -60,7 +63,7 @@
 
                 var url = jQuery.url(jQuery(this).attr('href'));
                 
-                History.pushState(url.param(), 'Pagination', '?' + url.attr('query'));
+                History.pushState(jQuery.extend({af: 'user-reputation'}, url.param()), 'Pagination', '?' + url.attr('query'));
             });
         },
 
