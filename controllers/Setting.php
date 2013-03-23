@@ -75,7 +75,7 @@ class Setting extends \UserReputation\Lib\Base
 	   	}
 	   	unset($rules);
 
-		echo '<strong>'.rtrim(get_bloginfo('siteurl'), '/').'/</strong>'.$this->_form->text($this->getConfig('prefix').'page_slug', $value).'<strong>/%user-nickname%</strong>';
+		echo '<strong>'.rtrim(get_bloginfo('url'), '/').'/</strong>'.$this->_form->text($this->getConfig('prefix').'page_slug', $value).'<strong>/%user-nickname%</strong>';
 	}
 
 	public function generalOwnPageSlugField()
@@ -91,7 +91,7 @@ class Setting extends \UserReputation\Lib\Base
 	   	}
 	   	unset($rules);
 
-		echo '<strong>'.rtrim(get_bloginfo('siteurl'), '/').'/</strong>'.$this->_form->text($this->getConfig('prefix').'own_page_slug', $value);
+		echo '<strong>'.rtrim(get_bloginfo('url'), '/').'/</strong>'.$this->_form->text($this->getConfig('prefix').'own_page_slug', $value);
 	}
 
 	public function general()
