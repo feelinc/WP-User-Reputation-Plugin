@@ -113,14 +113,16 @@ class Setting extends \UserReputation\Lib\Base
 			$nonce = (isset($_POST['_wpnonce'])) ? $_POST['_wpnonce'] : '';
 			if (wp_verify_nonce( $nonce, $this->getConfig('prefix').'edit-badge' ))
 			{
-				$title = (isset($_POST['title'])) ? $_POST['title'] : '';
-				$type  = (isset($_POST['type'])) ? $_POST['type'] : '';
-				$icon  = (isset($_POST['icon'])) ? $_POST['icon'] : '';
+				$title 		  = (isset($_POST['title'])) ? $_POST['title'] : '';
+				$type  		  = (isset($_POST['type'])) ? $_POST['type'] : '';
+				$icon  		  = (isset($_POST['icon'])) ? $_POST['icon'] : '';
+				$description  = (isset($_POST['description'])) ? $_POST['description'] : '';
 
 				$data = array(
-					'title' => $title,
-					'type'  => $type,
-					'icon'  => $icon
+					'title' 	   => $title,
+					'type'  	   => $type,
+					'icon'  	   => $icon,
+					'description'  => $description
 				);
 
 				$badge_id = $edit;
@@ -202,6 +204,7 @@ class Setting extends \UserReputation\Lib\Base
 		$badge->title = '';
 		$badge->type = 'bronze';
 		$badge->icon = '';
+		$badge->description = '';
 
 		return $badge;
 	}

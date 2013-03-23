@@ -60,6 +60,9 @@ class UserReputation extends Base
 			return false;
 		}
 
+		if (!is_object($reputation))
+			return false;
+
 		try {
 			$total_badges = ReputationModel::getTotalPerUserBadgeType($reputation->user_id);
 		} catch (DBException $e) {
@@ -290,24 +293,19 @@ class UserReputation extends Base
 	/*
 	* Set a reputation point to a user by their action
 	*
-	* param integer point              : point number, in example use -2 for negative point
-	* param integer action_id          : in example a Post ID
-	* param integer action_type        : in example 'post'
-	* param integer event_name         : event description / text when point added
-	* param integer user_id (optional) : point given by a user ID, automatically get current logged in user ID if not defined
+	* param integer point              			: point number, in example use -2 for negative point
+	* param integer action_id          			: in example a Post ID
+	* param integer action_type        			: in example 'post'
+	* param integer event_name                  : event description / text when point added
+	* param integer receiver_user_id (optional) : point given to a user ID, automatically action creator if not defined
+	* param integer user_id (optional) 			: point given by a user ID, automatically get current logged in user ID if not defined
 	*
 	* return boolean
 	*
 	* see apache / php log message for any error
 	*/
-	public static function add($point, $action_id, $action_type, $event_name, $user_id = 0)
+	public static function add($point, $action_id, $action_type, $event_name, $receiver_user_id = 0, $user_id = 0)
 	{
-		if (!in_array(strtolower($action_type), self::$_allowed_action_types))
-		{
-			echo 'Allowed action types are: '.implode(',', self::$_allowed_action_types);
-			exit();
-		}
-
 		if (!is_user_logged_in())
 			return false;
 
@@ -319,16 +317,14 @@ class UserReputation extends Base
 			}
 		}
 
-		if (self::isAlreadyAdding($user_id, $action_id, $action_type, $event_name))
-			return false;
-		
 		try {
 			ReputationModel::add(array(
-				'user_id'      => (int) $user_id,
-				'point'        => (int) $point,
-				'action_id'    => (int) $action_id,
-				'action_type'  => strtolower($action_type),
-				'event_name'   => $event_name
+				'user_id'      		=> (int) $user_id,
+				'receiver_user_id' 	=> (int) $receiver_user_id,
+				'point'        		=> (int) $point,
+				'action_id'    		=> (int) $action_id,
+				'action_type'  		=> strtolower($action_type),
+				'event_name'   		=> $event_name
 			));
 		} catch (DBException $e) {
 			error_log($e->getMessage());
@@ -415,27 +411,41 @@ class UserReputation extends Base
 	}
 
 	/*
+	* Get badge list data
+	*
+	* return array
+	*/
+	public static function getAvailableBadges()
+	{
+		return ReputationModel::getBadge();
+	}
+
+	/*
 	* Get badge list data for a user
 	*
-	* param integer user_id (optional) : automatically get current logged in user ID if not defined
+	* param integer user_id (optional) : list of available badges in the database will be returned if user_id not specified
 	*
 	* return array
 	*/
 	public static function getBadges(&$user_id = 0)
 	{
+		global $wpdb;
+
 		$badges = array();
 
-		if (empty($user_id))
+		$args = array();
+		if (!empty($user_id))
 		{
-			if (false === ($user_id = self::getCurrentUserId()))
-			{
-				return $badges;
-			}
+			$args = array(
+				'user_id'  => $user_id,
+				'order_by' => '',
+				'order'    => 'DESC'
+			);
 		}
 
-		$badges = ReputationModel::getBadge(array(
-			'user_id' => $user_id
-		));
+		$badges = ReputationModel::getBadge($args);
+
+		unset($args);
 
 		return $badges;
 	}
@@ -449,6 +459,14 @@ class UserReputation extends Base
 	*/
 	public static function getBadgesView($user_id = 0)
 	{
+		if (empty($user_id))
+		{
+			if (false === ($user_id = self::getCurrentUserId()))
+			{
+				return false;
+			}
+		}
+
 		$badges = self::getBadges($user_id);
 		
 		$base = Base::app();
@@ -587,6 +605,10 @@ class UserReputation extends Base
 
 		dbDelta( $sql );
 
+		$sql = "ALTER TABLE `".$table_name."` ADD `description` VARCHAR(255)  NOT NULL  DEFAULT ''  AFTER `icon`;";
+
+		$wpdb->query( $sql );
+
 		$table_name = $wpdb->prefix . 'reputation_histories';
 		$sql = "CREATE TABLE IF NOT EXISTS `".$table_name."` (
 		  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -602,7 +624,7 @@ class UserReputation extends Base
 
 		dbDelta( $sql );
 
-		$table_name = $wpdb->prefix . 'reputation_histories';
+		$table_name = $wpdb->prefix . 'reputation_user_badges';
 		$sql = "CREATE TABLE IF NOT EXISTS `".$table_name."` (
 		  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 		  `user_id` bigint(20) unsigned NOT NULL,

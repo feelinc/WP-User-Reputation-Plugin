@@ -11,13 +11,15 @@ get_header(); ?>
 	<h1>Please login to see your reputations</h1><hr/>
 	<?php endif; ?>
 
-	<h2>TOTAL REPUTATION: <?php echo $reputation->total; ?></h2>
-	<?php if (!empty($reputation->total_per_badge_types)) : ?>
-		<ul>
-		<?php foreach($reputation->total_per_badge_types as $type) : ?>
-			<li><?php echo $type->title; ?>: <?php echo $type->total; ?></li>
-		<?php endforeach; ?>
-		</ul>
+	<h2>TOTAL REPUTATION: <?php echo ($reputation) ? $reputation->total : 0; ?></h2>
+	<?php if ($reputation) : ?>
+		<?php if (!empty($reputation->total_per_badge_types)) : ?>
+			<ul>
+			<?php foreach($reputation->total_per_badge_types as $type) : ?>
+				<li><?php echo $type->title; ?>: <?php echo $type->total; ?></li>
+			<?php endforeach; ?>
+			</ul>
+		<?php endif; ?>
 	<?php endif; ?>
 
 	<hr/>
@@ -34,7 +36,7 @@ get_header(); ?>
 	<h2>BADGE HISTORY</h2>
 	<br/>
 	<br/>
-	<strong><?php echo $reputation->badge_number; ?> Badges</strong><br/><br/>
+	<strong><?php echo ($reputation) ? $reputation->badge_number : 0; ?> Badges</strong><br/><br/>
 	<div id="badge-history-wrapper">
 		<?php UserReputation::getBadgesView(); ?>
 	</div>

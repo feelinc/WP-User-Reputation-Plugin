@@ -5,19 +5,13 @@
 
 /* START: EXAMPLE FOR SIMULATING USER REPUTATION DATA */
 /* YOU CAN REMOVE IT IF WANT TO */
-$reputation_nonce_key = 'add-a-reputation';
-$badge_nonce_key = 'set-badge';
-$badge_remove_nonce_key = 'remove-badge';
-
 $error     = '';
 $success   = '';
 
 if ($_POST)
 {
-	$nonce = (isset($_POST['nonce'])) ? $_POST['nonce'] : '';
-
 	// process adding user badge
-	if (wp_verify_nonce( $nonce, $badge_nonce_key ))
+	if (isset($_POST['set_badge']))
 	{
 		$user_id  = (isset($_POST['user'])) ? $_POST['user'] : 0;
 		$badge_id = (isset($_POST['badge'])) ? $_POST['badge'] : 0;
@@ -33,7 +27,7 @@ if ($_POST)
 	}
 
 	// process remove user badge
-	if (wp_verify_nonce( $nonce, $badge_remove_nonce_key ))
+	if (isset($_POST['remove_badge']))
 	{
 		$user_id  = (isset($_POST['user'])) ? $_POST['user'] : 0;
 		$badge_id = (isset($_POST['badge'])) ? $_POST['badge'] : 0;
@@ -49,34 +43,21 @@ if ($_POST)
 	}
 
 	// process adding user reputation
-	if (wp_verify_nonce( $nonce, $reputation_nonce_key ))
+	if (isset($_POST['add_reputation']))
 	{
-		$point       = (isset($_POST['point'])) ? $_POST['point'] : '';
-		$action_id   = (isset($_POST['action_id'])) ? $_POST['action_id'] : '';
-		$action_type = (isset($_POST['action_type'])) ? $_POST['action_type'] : '';
-		$event_name  = (isset($_POST['event_name'])) ? $_POST['event_name'] : '';
+		$point            = (isset($_POST['point'])) ? $_POST['point'] : 0;
+		$receiver_user_id = (isset($_POST['user'])) ? $_POST['user'] : 0;
+		$action_id        = (isset($_POST['action_id'])) ? $_POST['action_id'] : 0;
+		$action_type      = (isset($_POST['action_type'])) ? $_POST['action_type'] : '';
+		$event_name       = (isset($_POST['event_name'])) ? $_POST['event_name'] : '';
 
-		if (UserReputation::isUserAction($action_id, $action_type))
+		if (! UserReputation::add($point, $action_id, $action_type, $event_name, $receiver_user_id))
 		{
-			$error = 'You cannot do that for your own action';
+			$error = 'There was a problem while adding the reputation';
 		}
 		else
 		{
-			if (UserReputation::isAlreadyAdding($action_id, $action_type, $event_name))
-			{
-				$error = 'You was voted / accepted this action';
-			}
-			else
-			{
-				if (! UserReputation::add($point, $action_id, $action_type, $event_name))
-				{
-					$error = 'There was a problem while adding the reputation';
-				}
-				else
-				{
-					$success = 'Reputation added';
-				}
-			}
+			$success = 'Reputation added';
 		}
 	}
 }
@@ -101,6 +82,7 @@ if ($user_data)
 }
 
 // get badge list
+$badges = UserReputation::getAvailableBadges();
 $badges = UserReputation::getBadges();
 
 // get current user badges
@@ -125,7 +107,7 @@ get_header(); ?>
 	<?php if ($user_data) : ?>
 
 	<h1><?php echo $user_data->display_name; ?></h1>
-	<h2>TOTAL REPUTATION: <?php echo $reputation->total; ?></h2>
+	<h2>TOTAL REPUTATION: <?php echo ($reputation) ? $reputation->total : 0; ?></h2>
 	<?php if (!empty($reputation->total_per_badge_types)) : ?>
 		<ul>
 		<?php foreach($reputation->total_per_badge_types as $type) : ?>
@@ -155,7 +137,7 @@ get_header(); ?>
 	<br/>
 	<br/>
 	<?php if ($user_data) : ?>
-	<strong><?php echo $reputation->badge_number; ?> Badges</strong><br/><br/>
+	<strong><?php echo ($reputation) ? $reputation->badge_number : 0; ?> Badges</strong><br/><br/>
 	<div id="badge-history-wrapper">
 		<?php UserReputation::getBadgesView($user_data->ID); ?>
 	</div>
@@ -168,24 +150,26 @@ get_header(); ?>
 	<br/>
 
 	<div class="clear">
-		<div style="width:49%; margin-righ:10px; float:left;">
+		<div style="width:48%; margin-right:20px; float:left;">
 			<?php if (!is_user_logged_in()) : ?>
 			<h3>Please login to add any reputation</h3><br/><br/>
 			<?php endif; ?>
 
 			<?php if ($user_data !== null && is_user_logged_in()) : ?>
+			<p style="color:red;">*Remember that the point will be given to the Action ID creator/author, not to the current page owner</p>
+			<br/><br/>
 			<form name="reputation" method="POST" action="">
 				Point: <input type="text" name="point" value="10" /><br/>
+				For User ID: <input type="text" name="user" value="<?php echo $user_data->ID; ?>" /><br/>
 				Action ID: <input type="text" name="action_id" value="1" /><br/>
 				Action Type: <input type="text" name="action_type" value="post" /><br/>
 				Event Name: <input type="text" name="event_name" value="voteup" /><br/>
-				CSRF Token: <input type="text" name="nonce" value="<?php echo wp_create_nonce($reputation_nonce_key); ?>" readonly="readonly" />
 				<input type="submit" name="add_reputation" value="Add a reputation" />
 			</form>
 			<?php endif; ?>
 		</div>
 
-		<div style="width:49%; margin-righ:10px; float:left;">
+		<div style="width:48%; float:left;">
 			<h4>Current user badges:</h4><br/>
 			<?php if (!empty($user_badges)) : ?>
 			<strong>TOTAL BADGE: <?php echo $reputation->badge_number; ?></strong><br/><br/>
@@ -197,7 +181,6 @@ get_header(); ?>
 					<form name="badge" method="POST" action="">
 						<input type="hidden" name="user" value="<?php echo $user_data->ID; ?>" />
 						<input type="hidden" name="badge" value="<?php echo $badge->id; ?>" />
-						<input type="hidden" name="nonce" value="<?php echo wp_create_nonce($badge_remove_nonce_key); ?>" readonly="readonly" />
 						<input type="submit" name="remove_badge" value="Remove badge" />
 					</form>
 
@@ -221,11 +204,12 @@ get_header(); ?>
 					<?php endforeach; ?>
 				</select>
 				<br/>
-				CSRF Token: <input type="text" name="nonce" value="<?php echo wp_create_nonce($badge_nonce_key); ?>" readonly="readonly" />
 				<input type="submit" name="set_badge" value="Set badge" />
 			</form>
 			<?php endif; ?>
 		</div>
 	</div>
+
+	<div style="clear:both"></div>
 
 <?php get_footer(); ?>

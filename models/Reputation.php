@@ -294,12 +294,13 @@ class Reputation
 		global $wpdb;
 
 		$data = array_merge(array(
-			'user_id'      => 0,
-			'point'        => 0,
-			'action_id'    => 0,
-			'action_type'  => '',
-			'event_name'   => '',
-			'created_at'   => time()
+			'user_id'      		=> 0,
+			'receiver_user_id' 	=> 0,
+			'point'        		=> 0,
+			'action_id'    		=> 0,
+			'action_type'  		=> '',
+			'event_name'   		=> '',
+			'created_at'   		=> time()
 		), $data);
 
 		if (empty($data['user_id'])
@@ -309,9 +310,8 @@ class Reputation
 			throw new DBException('Invalid data', DBException::EC_INVALID_DATA);
 		}
 
-		$user_id = self::getActionCreator($data['action_type'], $data['action_id']);
-
-		$data['receiver_user_id'] = $user_id;
+		if (empty($data['receiver_user_id']))
+			$data['receiver_user_id'] = self::getActionCreator($data['action_type'], $data['action_id']);
 
 		if (!$wpdb->insert($wpdb->prefix.'reputation_histories', $data))
 		{
@@ -320,7 +320,7 @@ class Reputation
 
 		$reputation_history_id = $wpdb->insert_id;
 
-		if (empty($user_id))
+		if (empty($data['receiver_user_id']))
 		{
 			$wpdb->delete($wpdb->prefix.'reputation_histories', array(
 				'id' => $reputation_history_id
@@ -332,14 +332,14 @@ class Reputation
 		$sql = 'SELECT `id` FROM ';
 		$sql .= '`'.$wpdb->prefix.'reputations'.'` ';
 		$sql .= 'WHERE ';
-		$sql .= '`user_id` = '.$user_id;
+		$sql .= '`user_id` = '.$data['receiver_user_id'];
 
 		$reputation_id = $wpdb->get_var($sql);
 
 		if (empty($reputation_id))
 		{
 			if (!$wpdb->insert($wpdb->prefix.'reputations', array(
-				'user_id'       => $user_id,
+				'user_id'       => $data['receiver_user_id'],
 				'total'         => $data['point'],
 				'action_number' => 1,
 				'badge_number'  => 0,
@@ -381,15 +381,23 @@ class Reputation
 
 		global $wpdb;
 
+		$data = array(
+			'title' => '',
+			'url' => ''
+		);
+
 		switch(strtolower($type))
 		{
 			case 'post':
 				$post = get_post($action_id);
 
-				$data = array(
-					'title' => $post->post_title,
-					'url' => get_permalink($action_id)
-				);
+				if ($post)
+				{
+					$data = array(
+						'title' => $post->post_title,
+						'url' => get_permalink($action_id)
+					);
+				}
 
 				unset($post);
 			break;
@@ -427,7 +435,7 @@ class Reputation
 		switch(strtolower($type))
 		{
 			case 'post':
-				$user_id = $wpdb->get_var('SELECT `post_author` FROM `'.$wpdb->posts.'` WHERE `ID` = '.$action_id);
+				$user_id = $wpdb->get_var('SELECT `post_author` FROM `'.$wpdb->posts.'` WHERE `ID` = '.$action_id.' AND `post_type` = "post" AND `post_status` = "publish"');
 			break;
 			case 'comment':
 				$user_id = $wpdb->get_var('SELECT `user_id` FROM `'.$wpdb->comments.'` WHERE `comment_ID` = '.$action_id);
@@ -452,17 +460,6 @@ class Reputation
 		{
 			throw new DBException('Invalid data', DBException::EC_INVALID_DATA);
 		}
-
-		$sql = 'SELECT `id` ';
-		$sql .= 'FROM `'.$wpdb->prefix.'reputation_user_badges` ';
-		$sql .= 'WHERE ';
-		$sql .= '`user_id` = '.$data['user_id'].' ';
-		$sql .= 'AND `badge_id` = '.$data['badge_id'].'';
-
-		$user_badge_id = $wpdb->get_var($sql);
-
-		if (!empty($user_badge_id))
-			return $user_badge_id;
 
 		if (!$wpdb->insert($wpdb->prefix.'reputation_user_badges', $data))
 		{
@@ -835,6 +832,11 @@ class Reputation
 	    {
 	    	$sql .= 'ORDER BY `'.$wpdb->prefix.'reputation_badges`.'.$options['order_by'].' '.$options['order'].' ';
 	    }
+
+	    if (!empty($options['user_id']))
+		{
+			$sql .= 'ORDER BY `'.$wpdb->prefix.'reputation_user_badges`.`created_at` '.$options['order'].' ';
+		}
 
 	    if (!empty($options['page']) && !empty($options['limit']))
 	    {

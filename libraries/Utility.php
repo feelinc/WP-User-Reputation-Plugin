@@ -650,6 +650,8 @@ class Utility
   
   public static function currentUrl()
   {
+    $_SERVER['HTTPS'] = (isset($_SERVER['HTTPS'])) ? $_SERVER['HTTPS'] : 'off';
+    
     $url = 'http';
     if ($_SERVER['HTTPS'] == 'on')
     {

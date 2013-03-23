@@ -11,6 +11,7 @@
 							<th scope="col" id="cb" class="manage-column column-cb">&nbsp;</th>
 							<th scope="col" id="title" class="manage-column column-name desc" style=""><?php _e('Title', $this->getConfig('txt_domain')); ?></th>
 							<th scope="col" id="type" class="manage-column column-description desc" style=""><?php _e('Type', $this->getConfig('txt_domain')); ?></th>
+							<th scope="col" id="desc" class="manage-column column-description desc" style=""><?php _e('Description', $this->getConfig('txt_domain')); ?></th>
 						</tr>
 					</thead>
 
@@ -19,6 +20,7 @@
 							<td scope="col" id="cb" class="manage-column column-cb">&nbsp;</th>
 							<th scope="col" id="title" class="manage-column column-name desc" style=""><?php _e('Title', $this->getConfig('txt_domain')); ?></th>
 							<th scope="col" id="type" class="manage-column column-type desc" style=""><?php _e('Type', $this->getConfig('txt_domain')); ?></th>
+							<th scope="col" id="desc" class="manage-column column-description desc" style=""><?php _e('Description', $this->getConfig('txt_domain')); ?></th>
 						</tr>
 					</tfoot>
 
@@ -35,11 +37,12 @@
 								</div>
 							</td>
 							<td class="type column-type"><?php echo $badge_types[$badge->type]; ?></td>
+							<td class="type column-type"><?php echo $badge->description; ?></td>
 						</tr>
 						<?php endforeach; ?>
 						<?php else: ?>
 						<tr class="alternate">
-							<td colspan="3"><?php _e('Please a badge first', $this->getConfig('txt_domain')); ?></td>
+							<td colspan="3"><?php _e('Please add a badge first', $this->getConfig('txt_domain')); ?></td>
 						</tr>
 						<?php endif; ?>
 					</tbody>
@@ -73,8 +76,12 @@
 						</div>
 						<div class="form-field form-required uploader">
 							<label for="icon"><?php _e('Icon', $this->getConfig('txt_domain')); ?></label>
-							<input name="icon" id="icon" type="text" value="<?php echo $current_badge->icon; ?>" aria-required="true" readonly="readonly" />
+							<input name="icon" id="icon" type="text" value="<?php echo $current_badge->icon; ?>" aria-required="true" />
 							<input type="button" id="upload-icon" class="button" value="<?php _e('Upload icon', $this->getConfig('txt_domain')); ?>" />
+						</div>
+						<div class="form-field form-required">
+							<label for="type"><?php _e('Description', $this->getConfig('txt_domain')); ?></label>
+							<textarea name="description" rows="10"><?php echo $current_badge->description; ?></textarea>
 						</div>
 						<p class="submit">
 							<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php _e(((empty($current_badge->id)) ? 'Add New Badge' : 'Save Changes'), $this->getConfig('txt_domain')); ?>" />
