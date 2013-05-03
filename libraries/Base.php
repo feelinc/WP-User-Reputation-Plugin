@@ -26,9 +26,9 @@ class Base
 	public function __construct()
 	{
 		if (!(self::$_instance instanceof self))
-        {
-            self::$_instance =& $this;
-        }
+		{
+			self::$_instance =& $this;
+		}
 
 		foreach(self::$_folders as $key => $folder)
 		{
@@ -41,9 +41,9 @@ class Base
 	}
 
 	public static function &app()
-    {
-        return self::$_instance;
-    }
+	{
+		return self::$_instance;
+	}
 
 	public function getOption($name)
 	{
