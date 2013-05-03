@@ -1,5 +1,9 @@
 <?php namespace UserReputation\Exception;
 
+/*
+ * (author) Sulaeman <me@sulaeman.com>
+ */
+
 /**
 * Exception Classes
 */

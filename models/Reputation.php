@@ -1,5 +1,9 @@
 <?php namespace UserReputation\Model;
 
+/*
+ * (author) Sulaeman <me@sulaeman.com>
+ */
+
 include_once( dirname(__DIR__) . '/libraries/Exceptions.php' );
 
 use \UserReputation\Exception\DBException;

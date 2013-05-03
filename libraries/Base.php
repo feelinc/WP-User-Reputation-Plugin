@@ -1,5 +1,9 @@
 <?php namespace UserReputation\Lib;
 
+/*
+ * (author) Sulaeman <me@sulaeman.com>
+ */
+
 include_once( __DIR__ . '/Exceptions.php' );
 include_once( __DIR__ . '/Utility.php' );
 

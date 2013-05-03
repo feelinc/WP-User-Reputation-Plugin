@@ -1,5 +1,9 @@
 <?php namespace UserReputation\Ctrl;
 
+/*
+ * (author) Sulaeman <me@sulaeman.com>
+ */
+
 include_once( __DIR__ . '/UserReputation.php' );
 
 class Hook extends \UserReputation\Lib\Base

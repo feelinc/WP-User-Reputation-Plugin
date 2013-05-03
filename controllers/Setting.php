@@ -1,5 +1,9 @@
 <?php namespace UserReputation\Ctrl;
 
+/*
+ * (author) Sulaeman <me@sulaeman.com>
+ */
+
 include_once( dirname(__DIR__) . '/models/Reputation.php' );
 
 use \UserReputation\Exception\SysException;

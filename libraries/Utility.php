@@ -1,5 +1,9 @@
 <?php namespace UserReputation\Lib;
 
+/*
+ * (author) Sulaeman <me@sulaeman.com>
+ */
+
 class Utility
 {
   /* never allowed, string replacement */
