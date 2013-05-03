@@ -1,7 +1,7 @@
 <?php namespace UserReputation\Lib;
 
 /*
- * (author) Sulaeman <me@sulaeman.com>
+ * (author) Sulaeman <me@sulaeman.com> @sulaeman
  */
 
 class Utility

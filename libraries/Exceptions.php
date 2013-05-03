@@ -1,7 +1,7 @@
 <?php namespace UserReputation\Exception;
 
 /*
- * (author) Sulaeman <me@sulaeman.com>
+ * (author) Sulaeman <me@sulaeman.com> @sulaeman
  */
 
 /**

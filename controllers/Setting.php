@@ -1,7 +1,7 @@
 <?php namespace UserReputation\Ctrl;
 
 /*
- * (author) Sulaeman <me@sulaeman.com>
+ * (author) Sulaeman <me@sulaeman.com> @sulaeman
  */
 
 include_once( dirname(__DIR__) . '/models/Reputation.php' );
